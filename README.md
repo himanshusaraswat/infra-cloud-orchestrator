@@ -39,6 +39,7 @@ Eliminates the operational overhead and security vulnerabilities of static JSON 
 ```
 
 ### Key Design Highlights
+
 - **Single Workload Identity Pool**: One pool centrally federates identities for both Frontend and Backend, following Google Cloud security best practices.
 - **Granular Least-Privilege Access**:
   - The Frontend repository can **only** impersonate the Frontend deployer service account.
@@ -71,6 +72,7 @@ Eliminates the operational overhead and security vulnerabilities of static JSON 
 ## 🚀 Quickstart Guide
 
 ### 1. Prerequisites
+
 - **Terraform** >= 1.5.0
 - **Google Cloud SDK (`gcloud`)** authenticated with admin privileges:
   ```bash
@@ -81,12 +83,15 @@ Eliminates the operational overhead and security vulnerabilities of static JSON 
 - **GitHub Personal Access Token** with `repo` scope (to let Terraform automatically configure GitHub Secrets).
 
 ### 2. Configure Variables
+
 Copy the example variables file:
+
 ```bash
 cp terraform.tfvars.example terraform.tfvars
 ```
 
 Edit `terraform.tfvars` with your project details:
+
 ```hcl
 project_id         = "your-project-id"
 project_number     = "123456789012"
@@ -104,12 +109,14 @@ enable_github_secrets = true
 ```
 
 ### 3. Initialize & Validate
+
 ```bash
 terraform init
 terraform validate
 ```
 
 ### 4. Review Plan & Apply
+
 ```bash
 export GITHUB_TOKEN="ghp_your_personal_access_token"
 
@@ -121,6 +128,7 @@ terraform apply
 ```
 
 ### 5. Configured GitHub Secrets
+
 When `terraform apply` finishes, it automatically creates encrypted repository secrets in GitHub:
 
 1. **Frontend Repository Secrets**:
@@ -170,11 +178,15 @@ jobs:
 ## ❓ FAQ
 
 ### Q: Why do we include `roles/serviceusage.serviceUsageConsumer`?
+
 `firebase-tools` >= 15.35.0 queries `serviceusage.googleapis.com` before deployments to verify enabled APIs. Without this role, Firebase deploys fail with HTTP 403 Forbidden.
 
 ### Q: How do I onboard another project?
+
 Copy `terraform.tfvars.example` to `my-project.tfvars`, set `create_pool = true`, populate the new Project ID and Project Number, and run:
+
 ```bash
 terraform apply -var-file="my-project.tfvars"
 ```
+
 It provisions a dedicated WIF pool, providers, and service accounts for that project.

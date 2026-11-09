@@ -31,3 +31,7 @@ terraform.rc
 
 # OS files
 .DS_Store
+
+# Node modules & tool caches
+node_modules/
+.npm/

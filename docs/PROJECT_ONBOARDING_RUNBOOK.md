@@ -9,6 +9,7 @@ This runbook provides the exact, copy-pasteable steps to provision Workload Iden
 ---
 
 ## 📋 Prerequisites
+
 1. **Google Cloud Account**: Owner or IAM Admin access to the target GCP/Firebase project.
 2. **GitHub Account**: Admin/Write access to the target frontend/backend repositories.
 3. **Local CLI Tools**:
@@ -22,13 +23,13 @@ This runbook provides the exact, copy-pasteable steps to provision Workload Iden
 
 From your [Google Cloud Console](https://console.cloud.google.com/) or [Firebase Console](https://console.firebase.google.com/):
 
-| Parameter | Example Value | Description |
-| :--- | :--- | :--- |
-| **`project_id`** | `my-prod-project` | Target Google Cloud Project ID |
-| **`project_number`** | `123456789012` | Found on GCP Project Dashboard / Overview |
-| **`github_org`** | `my-company-or-user` | GitHub username or organization |
-| **`frontend_repo_name`** | `my-frontend-app` | GitHub repo for Firebase Hosting |
-| **`backend_repo_name`** | `my-backend-api` | GitHub repo for App Engine / Cloud Run |
+| Parameter                | Example Value        | Description                               |
+| :----------------------- | :------------------- | :---------------------------------------- |
+| **`project_id`**         | `my-prod-project`    | Target Google Cloud Project ID            |
+| **`project_number`**     | `123456789012`       | Found on GCP Project Dashboard / Overview |
+| **`github_org`**         | `my-company-or-user` | GitHub username or organization           |
+| **`frontend_repo_name`** | `my-frontend-app`    | GitHub repo for Firebase Hosting          |
+| **`backend_repo_name`**  | `my-backend-api`     | GitHub repo for App Engine / Cloud Run    |
 
 ---
 
@@ -78,6 +79,7 @@ export GITHUB_TOKEN="ghp_your_personal_access_token_here"
 ## 📦 Step 3: Add CI/CD Workflow to the Target Repositories
 
 ### A. Frontend Repository (`my-frontend-app`)
+
 Create `.github/workflows/deploy.yml`:
 
 ```yaml
@@ -86,7 +88,7 @@ name: Deploy to Firebase Hosting
 on:
   push:
     branches:
-      - main  # or develop
+      - main # or develop
 
 permissions:
   contents: read
@@ -134,6 +136,7 @@ jobs:
 ```
 
 ### B. Backend Repository (`my-backend-api`)
+
 Create `.github/workflows/deploy.yml`:
 
 ```yaml
@@ -142,7 +145,7 @@ name: Deploy to Google Cloud App Engine
 on:
   push:
     branches:
-      - main  # or develop
+      - main # or develop
 
 permissions:
   contents: read
@@ -180,15 +183,16 @@ jobs:
 ## 🔍 Verification & Troubleshooting
 
 ### 1. How to verify token exchanges in Google Cloud Console
+
 1. Open [IAM & Admin ➔ Workload Identity Pools](https://console.cloud.google.com/iam-admin/workload-identity-pools).
 2. Click on your pool (e.g. `github-actions-pool` or `gh-gae-pool`).
 3. Under **Workload Identity Federation usage**, you should see an active graph showing token exchanges per second.
 
 ### 2. Common Pitfalls & Solutions
 
-| Symptom | Cause | Solution |
-| :--- | :--- | :--- |
-| `SyntaxError: Unexpected token '/', "/home/runn"...` | Using legacy `FirebaseExtended/action-hosting-deploy` with credential path string | Use `npx firebase-tools deploy` directly with `GOOGLE_APPLICATION_CREDENTIALS` |
-| `Error: Failed to authenticate, have you run firebase login?` | Missing `attribute.repository` mapping in the OIDC Provider | Ensure the OIDC Provider maps `"attribute.repository": "assertion.repository"` |
-| `Permission denied to get service [firebasehosting.googleapis.com] (HTTP 403)` | `firebase-tools` checking Service Usage API | Service Account must have `roles/serviceusage.serviceUsageConsumer` |
-| `the GitHub Action workflow must specify exactly one of "workload_identity_provider" or "credentials_json"` | GitHub Secret is empty or missing | Set the secret in GitHub **Settings ➔ Secrets and variables ➔ Actions ➔ Secrets** |
+| Symptom                                                                                                     | Cause                                                                             | Solution                                                                          |
+| :---------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------- |
+| `SyntaxError: Unexpected token '/', "/home/runn"...`                                                        | Using legacy `FirebaseExtended/action-hosting-deploy` with credential path string | Use `npx firebase-tools deploy` directly with `GOOGLE_APPLICATION_CREDENTIALS`    |
+| `Error: Failed to authenticate, have you run firebase login?`                                               | Missing `attribute.repository` mapping in the OIDC Provider                       | Ensure the OIDC Provider maps `"attribute.repository": "assertion.repository"`    |
+| `Permission denied to get service [firebasehosting.googleapis.com] (HTTP 403)`                              | `firebase-tools` checking Service Usage API                                       | Service Account must have `roles/serviceusage.serviceUsageConsumer`               |
+| `the GitHub Action workflow must specify exactly one of "workload_identity_provider" or "credentials_json"` | GitHub Secret is empty or missing                                                 | Set the secret in GitHub **Settings ➔ Secrets and variables ➔ Actions ➔ Secrets** |

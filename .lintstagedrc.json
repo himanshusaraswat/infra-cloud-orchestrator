@@ -1,0 +1,4 @@
+{
+  "*.tf": ["terraform fmt"],
+  "*.{json,md,yml,yaml}": ["prettier --write"]
+}
