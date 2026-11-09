@@ -1,0 +1,25 @@
+# ==============================================================================
+# Google Cloud & GitHub Actions Workload Identity Configuration (FE + BE)
+# Copy this file to terraform.tfvars and provide your actual values.
+# NEVER commit terraform.tfvars to version control.
+# ==============================================================================
+
+# Target Google Cloud Project
+project_id     = "my-gcp-project-id"
+project_number = "123456789012"
+
+# GitHub Configuration
+github_org         = "my-github-org"
+frontend_repo_name = "my-frontend-repo"
+backend_repo_name  = "my-backend-repo"
+
+# Workload Identity Pool Settings
+# Set create_pool = true to create a new pool for a new project
+# Set create_pool = false if reusing an existing pool
+create_pool = true
+pool_id     = "github-actions-pool"
+provider_id = "github-actions-provider"
+
+# Service Account Identifiers
+frontend_service_account_id = "gh-action-fe-deployer"
+backend_service_account_id  = "gh-action-be-deployer"

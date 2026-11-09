@@ -1,0 +1,121 @@
+name: 'Provision Cloud Infrastructure (Terraform)'
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Terraform Action to execute'
+        type: choice
+        options:
+          - plan
+          - apply
+        default: 'plan'
+        required: true
+      gcp_project_id:
+        description: 'Target Google Cloud Project ID'
+        type: string
+        required: true
+      gcp_project_number:
+        description: 'Target Google Cloud Project Number (found in Project Settings)'
+        type: string
+        required: true
+      github_org:
+        description: 'GitHub Owner or Organization'
+        type: string
+        required: true
+      frontend_repo_name:
+        description: 'Frontend Repository Name for Firebase Hosting'
+        type: string
+        required: true
+      backend_repo_name:
+        description: 'Backend Repository Name for App Engine / Cloud Run'
+        type: string
+        required: true
+      create_pool:
+        description: 'Create new Workload Identity Pool? (Set false to reuse existing pool)'
+        type: boolean
+        default: true
+        required: true
+      pool_id:
+        description: 'Workload Identity Pool ID'
+        type: string
+        default: 'github-actions-pool'
+        required: true
+      provider_id:
+        description: 'Workload Identity Provider ID'
+        type: string
+        default: 'github-actions-provider'
+        required: true
+      frontend_service_account_id:
+        description: 'Frontend Service Account ID'
+        type: string
+        default: 'gh-action-fe-deployer'
+        required: false
+      backend_service_account_id:
+        description: 'Backend Service Account ID'
+        type: string
+        default: 'gh-action-be-deployer'
+        required: false
+      enable_github_secrets:
+        description: 'Auto-create GitHub Actions Secrets in repos via Terraform?'
+        type: boolean
+        default: true
+        required: false
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  terraform:
+    name: 'Terraform ${{ inputs.action }}'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.11.1
+
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        id: auth
+        uses: google-github-actions/auth@v2
+        continue-on-error: true
+        with:
+          project_id: ${{ inputs.gcp_project_id }}
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.TERRAFORM_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        run: |
+          terraform plan \
+            -var="project_id=${{ inputs.gcp_project_id }}" \
+            -var="project_number=${{ inputs.gcp_project_number }}" \
+            -var="github_org=${{ inputs.github_org }}" \
+            -var="frontend_repo_name=${{ inputs.frontend_repo_name }}" \
+            -var="backend_repo_name=${{ inputs.backend_repo_name }}" \
+            -var="create_pool=${{ inputs.create_pool }}" \
+            -var="pool_id=${{ inputs.pool_id }}" \
+            -var="provider_id=${{ inputs.provider_id }}" \
+            -var="frontend_service_account_id=${{ inputs.frontend_service_account_id }}" \
+            -var="backend_service_account_id=${{ inputs.backend_service_account_id }}" \
+            -var="enable_github_secrets=${{ inputs.enable_github_secrets }}" \
+            -out=tfplan
+
+      - name: Terraform Apply
+        if: inputs.action == 'apply'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+        run: terraform apply -auto-approve tfplan
