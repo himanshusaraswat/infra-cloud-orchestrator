@@ -61,6 +61,16 @@ on:
         type: boolean
         default: true
         required: false
+      region:
+        description: 'GCP Region for Cloud Run & Artifact Registry'
+        type: string
+        default: 'us-central1'
+        required: false
+      deploy_cloud_run:
+        description: 'Provision Cloud Run Service and Artifact Registry?'
+        type: boolean
+        default: false
+        required: false
 
 permissions:
   contents: read
@@ -112,6 +122,8 @@ jobs:
             -var="frontend_service_account_id=${{ inputs.frontend_service_account_id }}" \
             -var="backend_service_account_id=${{ inputs.backend_service_account_id }}" \
             -var="enable_github_secrets=${{ inputs.enable_github_secrets }}" \
+            -var="region=${{ inputs.region }}" \
+            -var="deploy_cloud_run=${{ inputs.deploy_cloud_run }}" \
             -out=tfplan
 
       - name: Terraform Apply
