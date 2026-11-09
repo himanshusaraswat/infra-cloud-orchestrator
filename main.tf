@@ -12,7 +12,9 @@ resource "google_project_service" "required_apis" {
     "sts.googleapis.com",
     "serviceusage.googleapis.com",
     "firebasehosting.googleapis.com",
-    "appengine.googleapis.com"
+    "appengine.googleapis.com",
+    "run.googleapis.com",
+    "artifactregistry.googleapis.com"
   ])
   project            = var.project_id
   service            = each.key

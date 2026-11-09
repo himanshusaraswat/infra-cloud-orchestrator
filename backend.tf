@@ -11,11 +11,32 @@ resource "google_service_account" "backend_deployer" {
   display_name = "GitHub Actions Backend App Engine Deployer"
 }
 
-# IAM Permissions for App Engine
+# IAM Permissions for App Engine & Cloud Run Deployment
 resource "google_project_iam_member" "be_appengine_admin" {
   count   = var.create_pool ? 1 : 0
   project = var.project_id
   role    = "roles/appengine.appAdmin"
+  member  = "serviceAccount:${var.backend_service_account_id}@${var.project_id}.iam.gserviceaccount.com"
+}
+
+resource "google_project_iam_member" "be_cloudrun_admin" {
+  count   = var.create_pool ? 1 : 0
+  project = var.project_id
+  role    = "roles/run.admin"
+  member  = "serviceAccount:${var.backend_service_account_id}@${var.project_id}.iam.gserviceaccount.com"
+}
+
+resource "google_project_iam_member" "be_artifactregistry_writer" {
+  count   = var.create_pool ? 1 : 0
+  project = var.project_id
+  role    = "roles/artifactregistry.writer"
+  member  = "serviceAccount:${var.backend_service_account_id}@${var.project_id}.iam.gserviceaccount.com"
+}
+
+resource "google_project_iam_member" "be_service_account_user" {
+  count   = var.create_pool ? 1 : 0
+  project = var.project_id
+  role    = "roles/iam.serviceAccountUser"
   member  = "serviceAccount:${var.backend_service_account_id}@${var.project_id}.iam.gserviceaccount.com"
 }
 
@@ -38,4 +59,60 @@ resource "google_service_account_iam_member" "be_workload_identity_user" {
   service_account_id = "projects/${var.project_id}/serviceAccounts/${var.backend_service_account_id}@${var.project_id}.iam.gserviceaccount.com"
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/projects/${var.project_number}/locations/global/workloadIdentityPools/${var.pool_id}/attribute.repository/${var.github_org}/${var.backend_repo_name}"
+}
+
+# --------------------------------------------------------------------------------------------------
+# Optional Managed Cloud Run Service & Artifact Registry Docker Repository
+# --------------------------------------------------------------------------------------------------
+
+resource "google_artifact_registry_repository" "apps_docker" {
+  count         = var.deploy_cloud_run ? 1 : 0
+  project       = var.project_id
+  location      = var.region
+  repository_id = "apps"
+  description   = "Docker container registry for backend microservices"
+  format        = "DOCKER"
+}
+
+resource "google_cloud_run_v2_service" "backend" {
+  count    = var.deploy_cloud_run ? 1 : 0
+  project  = var.project_id
+  name     = var.backend_repo_name
+  location = var.region
+  ingress  = "INGRESS_TRAFFIC_ALL"
+
+  template {
+    scaling {
+      min_instance_count = 0
+      max_instance_count = 2
+    }
+    containers {
+      image = "${var.region}-docker.pkg.dev/${var.project_id}/apps/${var.backend_repo_name}:latest"
+      resources {
+        limits = {
+          cpu    = "1000m"
+          memory = "512Mi"
+        }
+      }
+      env {
+        name  = "NODE_ENV"
+        value = "production"
+      }
+      env {
+        name  = "PORT"
+        value = "3000"
+      }
+    }
+  }
+
+  depends_on = [google_artifact_registry_repository.apps_docker]
+}
+
+resource "google_cloud_run_v2_service_iam_member" "backend_public_invoker" {
+  count    = var.deploy_cloud_run ? 1 : 0
+  project  = var.project_id
+  location = var.region
+  name     = google_cloud_run_v2_service.backend[0].name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 }

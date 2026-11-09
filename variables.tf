@@ -59,6 +59,18 @@ variable "enable_github_secrets" {
   default     = true
 }
 
+variable "region" {
+  description = "Default Google Cloud Region for Cloud Run and Artifact Registry"
+  type        = string
+  default     = "us-central1"
+}
+
+variable "deploy_cloud_run" {
+  description = "Whether to provision Cloud Run service and Artifact Registry Docker repository"
+  type        = bool
+  default     = false
+}
+
 variable "github_token" {
   description = "GitHub Personal Access Token with repo scope (or set via GITHUB_TOKEN environment variable)"
   type        = string
