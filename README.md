@@ -7,7 +7,7 @@
 [![Zero Keys](<https://img.shields.io/badge/Security-Zero_JSON_Keys_(OIDC)-00B0FF>)](https://cloud.google.com/iam/docs/workload-identity-federation)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Production-ready Terraform Infrastructure as Code (IaC) orchestrating **Google Cloud Platform (GCP)** and **Firebase Hosting**. Implements **Workload Identity Federation (WIF)**, **GCS Remote State Backend with Versioning**, **128 MiB Cloud Run micro-footprint**, and **Automated 2-Version Artifact Registry cleanup policies** without static JSON service account keys.
+Production-ready Terraform Infrastructure as Code (IaC) orchestrating **Google Cloud Platform (GCP)** and **Firebase Hosting**. Implements **Workload Identity Federation (WIF)**, **GCS Remote State Backend with Versioning & Atomic Locking**, **128 MiB Cloud Run micro-footprint**, and **Automated 2-Version Artifact Registry cleanup policies** without static JSON service account keys.
 
 ---
 
@@ -54,11 +54,56 @@ flowchart TD
 
 ---
 
+## 🔐 The "No Fluff" Truth About Secrets
+
+### Why Traditional Secrets Are an Antipattern
+
+In legacy CI/CD pipelines, engineers create Google Cloud Service Account keys (`credentials.json`), base64-encode them, and paste them into GitHub Repository Secrets. This creates severe enterprise liabilities:
+
+1. **Permanent Credentials**: The key never expires unless manually deleted.
+2. **Exfiltration Liability**: If a runner is compromised or a build step leaks environment variables, attackers gain persistent, unrestricted cloud access.
+3. **Operational Overhead**: Enterprise policies mandate 90-day key rotations, frequently causing inadvertent deployment downtime.
+
+### How Workload Identity Federation (WIF) Works Cryptographically
+
+With Workload Identity Federation, **zero private keys and zero passwords exist**:
+
+| Dimension             | Legacy Service Account Keys                   | Keyless WIF (This Architecture)                                         |
+| :-------------------- | :-------------------------------------------- | :---------------------------------------------------------------------- |
+| **Storage in GitHub** | Plaintext base64 `.json` private key          | **Zero private keys**. Only public resource identifiers                 |
+| **Token Lifetime**    | Infinite (multi-year) until revoked           | **Short-lived federated token (15–60 minutes)**                         |
+| **Exfiltration Risk** | High: usable from any machine on the internet | **Zero**: Token cannot be reused outside runner or after timeout        |
+| **Key Rotation**      | Manual rotation required every 90 days        | **Zero maintenance**: Handled automatically via asymmetric cryptography |
+| **Fork / PR Abuse**   | Vulnerable to malicious workflows             | **Blocked**: GCP verifies `assertion.repository` before granting token  |
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Trigger as GitHub Actions Runner
+    participant OIDC as GitHub OIDC Token Service
+    participant STS as Google Cloud STS (gh-gae-pool)
+    participant IAM as Target Service Account (Impersonation)
+    participant Cloud as GCP Target (Cloud Run / Artifact Registry / Firebase)
+
+    Trigger->>OIDC: Request Signed OIDC JWT (ACTIONS_ID_TOKEN_REQUEST_URL)
+    OIDC-->>Trigger: Returns Signed JWT with Repository & Branch Claims
+    Trigger->>STS: Send JWT to WIF Pool Provider (gh-gae-provider)
+    STS->>OIDC: Validate Signature against GitHub's JWKS
+    STS->>STS: Check Attribute Condition (assertion.repository == target repo)
+    STS-->>Trigger: Issues Ephemeral GCP STS Token
+    Trigger->>IAM: Impersonate Target Service Account (roles/iam.workloadIdentityUser)
+    IAM-->>Trigger: Issues Scoped OAuth2 Access Token (1-hour max)
+    Trigger->>Cloud: Deploy Infrastructure / Container / Frontend
+    Cloud-->>Trigger: 200 OK Deployment Successful
+```
+
+---
+
 ## 🌟 Enterprise Engineering Wins
 
 ### 1. 🔑 Zero JSON Service Account Keys Forever
 
-- **OIDC Token Exchange**: GitHub Actions runners authenticate dynamically by exchanging short-lived JWT tokens with Google's Security Token Service (`sts.googleapis.com`).
+- **OIDC Token Exchange**: Ephemeral GitHub Actions runners authenticate dynamically by exchanging short-lived JWT tokens with Google's Security Token Service (`sts.googleapis.com`).
 - Eliminates service account key generation, downloading, and annual rotation risks.
 - If a GitHub runner is compromised, no static credentials or `.json` keys exist to be leaked.
 
@@ -82,6 +127,7 @@ flowchart TD
 - Declaratively provisions `google_cloud_run_v2_service.backend` with **128 MiB** memory and **1000m CPU**.
 - Sets `execution_environment = "EXECUTION_ENVIRONMENT_GEN1"` and request-based CPU allocation (`cpu_idle = true`).
 - Configures scale-to-zero (`min_instance_count = 0`, `max_instance_count = 2`), ensuring $0 idle hosting cost.
+- Explicit container port binding: binds via `ports { container_port = 3000 }` avoiding Cloud Run reserved environment variable conflicts.
 
 ### 5. 🎯 Granular Least-Privilege IAM Roles
 
@@ -89,7 +135,18 @@ flowchart TD
 | :---------------------------- | :---------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
 | **`gh-action-fe-deployer`**   | `roles/firebasehosting.admin`<br>`roles/serviceusage.serviceUsageConsumer`    | Deploys static Angular bundles to Firebase Hosting CDN and inspects enabled APIs.                        |
 | **`gh-action-be-deployer`**   | `roles/run.admin`<br>`roles/artifactregistry.writer`<br>`roles/storage.admin` | Pushes Node 26 Docker images to Artifact Registry, deploys Cloud Run revisions, and prunes old versions. |
-| **`github-action-680566572`** | `roles/owner` (or fine-grained IaC Admin)                                     | Provisions infrastructure, manages IAM bindings, and locks GCS state bucket.                             |
+| **`github-action-680566572`** | Fine-grained IaC Admin / `roles/owner`                                        | Provisions infrastructure, manages IAM bindings, and locks GCS state bucket.                             |
+
+---
+
+## 🔒 Shift-Left Pre-Commit Architecture
+
+Infrastructure changes are validated locally on the engineer's machine via `.husky/pre-commit`:
+
+1. **`lint-staged`**: Enforces Prettier formatting on markdown, YAML, and JSON files.
+2. **`terraform fmt -check`**: Validates canonical HCL formatting across all `.tf` manifests.
+
+Any non-standard HCL formatting or unformatted configuration blocks the commit before it can reach remote CI.
 
 ---
 
@@ -97,6 +154,9 @@ flowchart TD
 
 ```text
 infra-cloud-orchestrator/
+├── .husky/
+│   ├── pre-commit             # Shift-left quality gate (lint-staged + terraform fmt -check)
+│   └── commit-msg             # Conventional commit validation
 ├── .github/workflows/
 │   ├── ci.yml                 # PR quality gate (terraform fmt, init, validate)
 │   └── provision-infra.yml    # Parameterized workflow dispatch to plan/apply via GCS state
@@ -182,16 +242,16 @@ terraform apply
 
 ### 5. Automated GitHub Secrets
 
-When `terraform apply` finishes, it automatically creates encrypted repository secrets in your GitHub repositories:
+When `terraform apply` finishes, it automatically creates encrypted repository secrets in your GitHub repositories. Notice that **none of these values are passwords or private keys**:
 
 1. **Frontend Repository Secrets (`prj-generic-gallery`)**:
-   - `WORKLOAD_IDENTITY_PROVIDER`
-   - `FIREBASE_SERVICE_ACCOUNT_EMAIL`
-   - `GCP_PROJECT_ID`
+   - `WORKLOAD_IDENTITY_PROVIDER`: `projects/961243721322/locations/global/workloadIdentityPools/gh-gae-pool/providers/gh-gae-provider`
+   - `FIREBASE_SERVICE_ACCOUNT_EMAIL`: `gh-action-fe-deployer@meraki-public.iam.gserviceaccount.com`
+   - `GCP_PROJECT_ID`: `meraki-public`
 2. **Backend Repository Secrets (`ms-generic-gallery`)**:
-   - `DEV_STG_WORKLOAD_IDENTITY_PROVIDER`
-   - `DEV_STG_WIP_SA`
-   - `DEV_STG_PROJECT_ID`
+   - `DEV_STG_WORKLOAD_IDENTITY_PROVIDER`: `projects/961243721322/locations/global/workloadIdentityPools/gh-gae-pool/providers/gh-gae-provider`
+   - `DEV_STG_WIP_SA`: `gh-action-be-deployer@meraki-public.iam.gserviceaccount.com`
+   - `DEV_STG_PROJECT_ID`: `meraki-public`
 
 ---
 
