@@ -23,11 +23,11 @@ flowchart TD
     end
 
     subgraph GCP_IAM["Google Cloud IAM & Workload Identity"]
-        WIP["Single Central WIF Pool\n(gh-gae-pool)"]
-        PROVIDER["WIF Provider\n(gh-gae-provider)"]
+        WIP["Single Central WIF Pool\n(gh-actions-pool)"]
+        PROVIDER["WIF Provider\n(gh-actions-provider)"]
         SA_FE["Frontend Service Account\n(gh-action-fe-deployer)"]
         SA_BE["Backend Service Account\n(gh-action-be-deployer)"]
-        SA_TF["Terraform IaC Service Account\n(github-action-680566572)"]
+        SA_TF["Terraform IaC Service Account\n(gh-action-iac-deployer)"]
     end
 
     subgraph GCP_SERVICES["Google Cloud & Firebase Production Services"]
@@ -81,13 +81,13 @@ sequenceDiagram
     autonumber
     actor Trigger as GitHub Actions Runner
     participant OIDC as GitHub OIDC Token Service
-    participant STS as Google Cloud STS (gh-gae-pool)
+    participant STS as Google Cloud STS (gh-actions-pool)
     participant IAM as Target Service Account (Impersonation)
     participant Cloud as GCP Target (Cloud Run / Artifact Registry / Firebase)
 
     Trigger->>OIDC: Request Signed OIDC JWT (ACTIONS_ID_TOKEN_REQUEST_URL)
     OIDC-->>Trigger: Returns Signed JWT with Repository & Branch Claims
-    Trigger->>STS: Send JWT to WIF Pool Provider (gh-gae-provider)
+    Trigger->>STS: Send JWT to WIF Pool Provider (gh-actions-provider)
     STS->>OIDC: Validate Signature against GitHub's JWKS
     STS->>STS: Check Attribute Condition (assertion.repository == target repo)
     STS-->>Trigger: Issues Ephemeral GCP STS Token
@@ -131,11 +131,11 @@ sequenceDiagram
 
 ### 5. 🎯 Granular Least-Privilege IAM Roles
 
-| Service Account               | Role Scope                                                                    | Justification                                                                                            |
-| :---------------------------- | :---------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
-| **`gh-action-fe-deployer`**   | `roles/firebasehosting.admin`<br>`roles/serviceusage.serviceUsageConsumer`    | Deploys static Angular bundles to Firebase Hosting CDN and inspects enabled APIs.                        |
-| **`gh-action-be-deployer`**   | `roles/run.admin`<br>`roles/artifactregistry.writer`<br>`roles/storage.admin` | Pushes Node 26 Docker images to Artifact Registry, deploys Cloud Run revisions, and prunes old versions. |
-| **`github-action-680566572`** | Fine-grained IaC Admin / `roles/owner`                                        | Provisions infrastructure, manages IAM bindings, and locks GCS state bucket.                             |
+| Service Account              | Role Scope                                                                    | Justification                                                                                            |
+| :--------------------------- | :---------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------- |
+| **`gh-action-fe-deployer`**  | `roles/firebasehosting.admin`<br>`roles/serviceusage.serviceUsageConsumer`    | Deploys static Angular bundles to Firebase Hosting CDN and inspects enabled APIs.                        |
+| **`gh-action-be-deployer`**  | `roles/run.admin`<br>`roles/artifactregistry.writer`<br>`roles/storage.admin` | Pushes Node 26 Docker images to Artifact Registry, deploys Cloud Run revisions, and prunes old versions. |
+| **`gh-action-iac-deployer`** | Fine-grained IaC Admin / `roles/owner`                                        | Provisions infrastructure, manages IAM bindings, and locks GCS state bucket.                             |
 
 ---
 
@@ -197,16 +197,16 @@ cp terraform.tfvars.example terraform.tfvars
 Edit `terraform.tfvars`:
 
 ```hcl
-project_id         = "meraki-public"
-project_number     = "961243721322"
-github_org         = "himanshusaraswat"
+project_id         = "your-gcp-project-id"
+project_number     = "123456789012"
+github_org         = "your-github-org"
 frontend_repo_name = "prj-generic-gallery"
 backend_repo_name  = "ms-generic-gallery"
 
 # Workload Identity Pool
-create_pool        = false # Set to true for a brand-new project without an existing pool
-pool_id            = "gh-gae-pool"
-provider_id        = "gh-gae-provider"
+create_pool        = true
+pool_id            = "gh-actions-pool"
+provider_id        = "gh-actions-provider"
 
 # Automated GitHub Secrets provisioning
 enable_github_secrets = true
@@ -245,13 +245,13 @@ terraform apply
 When `terraform apply` finishes, it automatically creates encrypted repository secrets in your GitHub repositories. Notice that **none of these values are passwords or private keys**:
 
 1. **Frontend Repository Secrets (`prj-generic-gallery`)**:
-   - `WORKLOAD_IDENTITY_PROVIDER`: `projects/961243721322/locations/global/workloadIdentityPools/gh-gae-pool/providers/gh-gae-provider`
-   - `FIREBASE_SERVICE_ACCOUNT_EMAIL`: `gh-action-fe-deployer@meraki-public.iam.gserviceaccount.com`
-   - `GCP_PROJECT_ID`: `meraki-public`
+   - `WORKLOAD_IDENTITY_PROVIDER`: `projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/providers/<PROVIDER_ID>`
+   - `FIREBASE_SERVICE_ACCOUNT_EMAIL`: `gh-action-fe-deployer@<PROJECT_ID>.iam.gserviceaccount.com`
+   - `GCP_PROJECT_ID`: `<PROJECT_ID>`
 2. **Backend Repository Secrets (`ms-generic-gallery`)**:
-   - `DEV_STG_WORKLOAD_IDENTITY_PROVIDER`: `projects/961243721322/locations/global/workloadIdentityPools/gh-gae-pool/providers/gh-gae-provider`
-   - `DEV_STG_WIP_SA`: `gh-action-be-deployer@meraki-public.iam.gserviceaccount.com`
-   - `DEV_STG_PROJECT_ID`: `meraki-public`
+   - `DEV_STG_WORKLOAD_IDENTITY_PROVIDER`: `projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/<POOL_ID>/providers/<PROVIDER_ID>`
+   - `DEV_STG_WIP_SA`: `gh-action-be-deployer@<PROJECT_ID>.iam.gserviceaccount.com`
+   - `DEV_STG_PROJECT_ID`: `<PROJECT_ID>`
 
 ---
 
