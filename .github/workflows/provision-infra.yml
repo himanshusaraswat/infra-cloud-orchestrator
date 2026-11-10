@@ -71,6 +71,31 @@ on:
         type: boolean
         default: true
         required: false
+      cloud_run_memory:
+        description: 'Memory limit for Cloud Run instance (e.g. 128Mi)'
+        type: string
+        default: '128Mi'
+        required: false
+      cloud_run_cpu:
+        description: 'CPU limit for Cloud Run instance (e.g. 1000m)'
+        type: string
+        default: '1000m'
+        required: false
+      cloud_run_min_instances:
+        description: 'Minimum instances (0 for scale-to-zero)'
+        type: number
+        default: 0
+        required: false
+      cloud_run_max_instances:
+        description: 'Maximum instances'
+        type: number
+        default: 2
+        required: false
+      artifact_retention_count:
+        description: 'Artifact Registry versions to retain (1 active + 1 rollback)'
+        type: number
+        default: 2
+        required: false
 
 permissions:
   contents: read
@@ -124,6 +149,11 @@ jobs:
             -var="enable_github_secrets=${{ inputs.enable_github_secrets }}" \
             -var="region=${{ inputs.region }}" \
             -var="deploy_cloud_run=${{ inputs.deploy_cloud_run }}" \
+            -var="cloud_run_memory=${{ inputs.cloud_run_memory }}" \
+            -var="cloud_run_cpu=${{ inputs.cloud_run_cpu }}" \
+            -var="cloud_run_min_instances=${{ inputs.cloud_run_min_instances }}" \
+            -var="cloud_run_max_instances=${{ inputs.cloud_run_max_instances }}" \
+            -var="artifact_retention_count=${{ inputs.artifact_retention_count }}" \
             -out=tfplan
 
       - name: Terraform Apply

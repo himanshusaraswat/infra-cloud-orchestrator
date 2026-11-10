@@ -72,6 +72,36 @@ resource "google_artifact_registry_repository" "apps_docker" {
   repository_id = "apps"
   description   = "Docker container registry for backend microservices"
   format        = "DOCKER"
+
+  cleanup_policy_dry_run = false
+
+  # Policy 1: Always retain the N most recent image versions (1 active + 1 rollback)
+  cleanup_policies {
+    id     = "keep-recent-versions"
+    action = "KEEP"
+    most_recent_versions {
+      keep_count = var.artifact_retention_count
+    }
+  }
+
+  # Policy 2: Automatically delete untagged container image digests (free up storage immediately)
+  cleanup_policies {
+    id     = "delete-untagged"
+    action = "DELETE"
+    condition {
+      tag_state = "UNTAGGED"
+    }
+  }
+
+  # Policy 3: Purge historical tagged versions older than 30 days
+  cleanup_policies {
+    id     = "delete-older-than-30d"
+    action = "DELETE"
+    condition {
+      tag_state  = "TAGGED"
+      older_than = "2592000s" # 30 days
+    }
+  }
 }
 
 resource "google_cloud_run_v2_service" "backend" {
@@ -82,17 +112,22 @@ resource "google_cloud_run_v2_service" "backend" {
   ingress  = "INGRESS_TRAFFIC_ALL"
 
   template {
+    execution_environment = "EXECUTION_ENVIRONMENT_GEN1"
+
     scaling {
-      min_instance_count = 0
-      max_instance_count = 2
+      min_instance_count = var.cloud_run_min_instances
+      max_instance_count = var.cloud_run_max_instances
     }
+
     containers {
       image = "${var.region}-docker.pkg.dev/${var.project_id}/apps/${var.backend_repo_name}:latest"
       resources {
         limits = {
-          cpu    = "1000m"
-          memory = "512Mi"
+          cpu    = var.cloud_run_cpu
+          memory = var.cloud_run_memory
         }
+        cpu_idle          = true
+        startup_cpu_boost = true
       }
       env {
         name  = "NODE_ENV"
@@ -101,6 +136,10 @@ resource "google_cloud_run_v2_service" "backend" {
       env {
         name  = "PORT"
         value = "3000"
+      }
+      env {
+        name  = "NODE_OPTIONS"
+        value = "--max-old-space-size=90"
       }
     }
   }

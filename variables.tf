@@ -71,6 +71,36 @@ variable "deploy_cloud_run" {
   default     = false
 }
 
+variable "cloud_run_memory" {
+  description = "Memory limit for Cloud Run instance (128Mi is the minimal footprint for Gen1 execution)"
+  type        = string
+  default     = "128Mi"
+}
+
+variable "cloud_run_cpu" {
+  description = "CPU limit for Cloud Run instance (1000m / 1 vCPU with request-based throttling)"
+  type        = string
+  default     = "1000m"
+}
+
+variable "cloud_run_min_instances" {
+  description = "Minimum number of instances (0 for scale-to-zero free tier)"
+  type        = number
+  default     = 0
+}
+
+variable "cloud_run_max_instances" {
+  description = "Maximum number of instances (prevents runaway scaling and unexpected bills)"
+  type        = number
+  default     = 2
+}
+
+variable "artifact_retention_count" {
+  description = "Number of recent container image versions to retain in Artifact Registry (1 active + 1 rollback)"
+  type        = number
+  default     = 2
+}
+
 variable "github_token" {
   description = "GitHub Personal Access Token with repo scope (or set via GITHUB_TOKEN environment variable)"
   type        = string

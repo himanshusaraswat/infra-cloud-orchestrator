@@ -23,3 +23,12 @@ provider_id = "github-actions-provider"
 # Service Account Identifiers
 frontend_service_account_id = "gh-action-fe-deployer"
 backend_service_account_id  = "gh-action-be-deployer"
+
+# Microservice & Cloud Run Cost Optimization Settings
+deploy_cloud_run         = true
+region                   = "us-central1"
+cloud_run_memory         = "128Mi"
+cloud_run_cpu            = "1000m"
+cloud_run_min_instances  = 0
+cloud_run_max_instances  = 2
+artifact_retention_count = 2
