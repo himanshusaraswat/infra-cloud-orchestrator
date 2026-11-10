@@ -129,13 +129,12 @@ resource "google_cloud_run_v2_service" "backend" {
         cpu_idle          = true
         startup_cpu_boost = true
       }
+      ports {
+        container_port = 3000
+      }
       env {
         name  = "NODE_ENV"
         value = "production"
-      }
-      env {
-        name  = "PORT"
-        value = "3000"
       }
       env {
         name  = "NODE_OPTIONS"
