@@ -124,8 +124,11 @@ jobs:
           workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.TERRAFORM_SERVICE_ACCOUNT_EMAIL }}
 
-      - name: Terraform Init
-        run: terraform init
+      - name: Terraform Init (Remote GCS State)
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ inputs.gcp_project_id }}-tfstate" \
+            -backend-config="prefix=terraform/state"
 
       - name: Terraform Validate
         run: terraform validate
