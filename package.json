@@ -8,6 +8,7 @@
     "format": "terraform fmt",
     "format:check": "prettier --check '*.{json,md,yml,yaml}'",
     "validate": "terraform validate",
+    "check:drift": "node scripts/check-doc-drift.mjs",
     "prepare": "husky"
   },
   "devDependencies": {

@@ -1,0 +1,42 @@
+{
+  "folders": [
+    {
+      "name": "🎨 Frontend (Angular 22 Zoneless)",
+      "path": "../prj-generic-gallery"
+    },
+    {
+      "name": "⚡ Microservice (Fastify 5 Node 26)",
+      "path": "../ms-generic-gallery"
+    },
+    {
+      "name": "☁️ Infrastructure (Terraform 1.11 IaC)",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+    "editor.rulers": [100],
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.exclude": {
+      "**/.git": true,
+      "**/.DS_Store": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/.terraform": true,
+      "**/.angular": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "angular.ng-template",
+      "hashicorp.terraform",
+      "vitest.explorer",
+      "esbenp.prettier-vscode",
+      "dbaeumer.vscode-eslint"
+    ]
+  }
+}
