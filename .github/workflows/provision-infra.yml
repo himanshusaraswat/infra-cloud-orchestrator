@@ -34,17 +34,17 @@ on:
       create_pool:
         description: 'Create new Workload Identity Pool? (Set false to reuse existing pool)'
         type: boolean
-        default: true
+        default: false
         required: true
       pool_id:
         description: 'Workload Identity Pool ID'
         type: string
-        default: 'github-actions-pool'
+        default: 'gh-gae-pool'
         required: true
       provider_id:
         description: 'Workload Identity Provider ID'
         type: string
-        default: 'github-actions-provider'
+        default: 'gh-gae-provider'
         required: true
       frontend_service_account_id:
         description: 'Frontend Service Account ID'
@@ -59,7 +59,7 @@ on:
       enable_github_secrets:
         description: 'Auto-create GitHub Actions Secrets in repos via Terraform?'
         type: boolean
-        default: true
+        default: false
         required: false
       region:
         description: 'GCP Region for Cloud Run & Artifact Registry'
@@ -69,7 +69,7 @@ on:
       deploy_cloud_run:
         description: 'Provision Cloud Run Service and Artifact Registry?'
         type: boolean
-        default: false
+        default: true
         required: false
 
 permissions:
