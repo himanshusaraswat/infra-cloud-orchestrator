@@ -4,9 +4,25 @@ on:
   pull_request:
     branches:
       - main
+      - develop
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.husky/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.nvmrc'
   push:
     branches:
       - main
+      - develop
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.husky/**'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.nvmrc'
 
 permissions:
   contents: read
