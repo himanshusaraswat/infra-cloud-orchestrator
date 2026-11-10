@@ -33,9 +33,9 @@ repositories:
 
 Welcome to the central, living **System Knowledge Graph** for the Generic Gallery Platform. This document serves as the single relational source of truth across all three repositories in the workspace:
 
-1. **[`prj-generic-gallery`](file:///Users/himanshusaraswat/workspace_hs/prj-generic-gallery/README.md)**: Angular 22 Zoneless + Signals frontend on Firebase Hosting.
-2. **[`ms-generic-gallery`](file:///Users/himanshusaraswat/workspace_hs/ms-generic-gallery/README.md)**: Fastify 5 + Node 26 microservice on Google Cloud Run (128 MiB budget).
-3. **[`infra-cloud-orchestrator`](file:///Users/himanshusaraswat/workspace_hs/infra-cloud-orchestrator/README.md)**: Terraform 1.11 Infrastructure as Code provisioning Google Cloud resources with Keyless Workload Identity Federation (WIF).
+1. **[`prj-generic-gallery`](https://github.com/himanshusaraswat/prj-generic-gallery)**: Angular 22 Zoneless + Signals frontend on Firebase Hosting.
+2. **[`ms-generic-gallery`](https://github.com/himanshusaraswat/ms-generic-gallery)**: Fastify 5 + Node 26 microservice on Google Cloud Run (128 MiB budget).
+3. **[`infra-cloud-orchestrator`](https://github.com/himanshusaraswat/infra-cloud-orchestrator)**: Terraform 1.11 Infrastructure as Code provisioning Google Cloud resources with Keyless Workload Identity Federation (WIF).
 
 ---
 
@@ -227,11 +227,11 @@ To prevent wasteful CI runs and accidental production deployments, each reposito
 
 ## 🔗 Repository Spoke Navigation
 
-- 🎨 **Frontend Spoke**: [`prj-generic-gallery/AGENTS.md`](file:///Users/himanshusaraswat/workspace_hs/prj-generic-gallery/AGENTS.md)
+- 🎨 **Frontend Spoke**: [`prj-generic-gallery/AGENTS.md`](https://github.com/himanshusaraswat/prj-generic-gallery/blob/develop/AGENTS.md)
   - Angular 22 Zoneless rules, Signal forms, Google MWG compliance, Vitest mocking.
-- ⚡ **Backend Spoke**: [`ms-generic-gallery/AGENTS.md`](file:///Users/himanshusaraswat/workspace_hs/ms-generic-gallery/AGENTS.md)
+- ⚡ **Backend Spoke**: [`ms-generic-gallery/AGENTS.md`](https://github.com/himanshusaraswat/ms-generic-gallery/blob/develop/AGENTS.md)
   - Fastify 5 lifecycle, 128 MiB memory tuning, Zod contracts, App Check verification.
-- ☁️ **Infrastructure Spoke**: [`infra-cloud-orchestrator/AGENTS.md`](file:///Users/himanshusaraswat/workspace_hs/infra-cloud-orchestrator/AGENTS.md)
+- ☁️ **Infrastructure Spoke**: [`infra-cloud-orchestrator/AGENTS.md`](../AGENTS.md)
   - Terraform 1.11 modules, Keyless WIF OIDC, Artifact Registry retention, GCS backend.
-- 🔄 **Workspace Agent Governance**: [`workspace_hs/AGENTS.md`](file:///Users/himanshusaraswat/workspace_hs/AGENTS.md)
+- 🔄 **Workspace Agent Governance**: [`WORKSPACE_AGENTS.md`](./WORKSPACE_AGENTS.md)
   - Atomic Code-Doc protocol, Zero-Drift validation, Multi-repo handoff rules.

@@ -10,7 +10,7 @@ state_storage: gcs-remote-versioned
 
 # ☁️ Infrastructure Agent Guide: Terraform 1.11 & Keyless WIF
 
-This guide defines the IaC architecture, security protocols, and operational procedures for [`infra-cloud-orchestrator`](file:///Users/himanshusaraswat/workspace_hs/infra-cloud-orchestrator/README.md).
+This guide defines the IaC architecture, security protocols, and operational procedures for [`infra-cloud-orchestrator`](./README.md).
 
 ---
 

@@ -69,9 +69,9 @@ This document defines the **mandatory operational rules** for all AI coding assi
 > **"Frontend code must adhere to Angular 22 Zoneless and Google Modern Web Guidance (MWG); Backend code must adhere to Fastify 5 128 MiB Cloud Run constraints."**
 
 - Refer to the individual repository spoke rules:
-  - [`prj-generic-gallery/AGENTS.md`](file:///Users/himanshusaraswat/workspace_hs/prj-generic-gallery/AGENTS.md)
-  - [`ms-generic-gallery/AGENTS.md`](file:///Users/himanshusaraswat/workspace_hs/ms-generic-gallery/AGENTS.md)
-  - [`infra-cloud-orchestrator/AGENTS.md`](file:///Users/himanshusaraswat/workspace_hs/infra-cloud-orchestrator/AGENTS.md)
+  - [`prj-generic-gallery/AGENTS.md`](https://github.com/himanshusaraswat/prj-generic-gallery/blob/develop/AGENTS.md)
+  - [`ms-generic-gallery/AGENTS.md`](https://github.com/himanshusaraswat/ms-generic-gallery/blob/develop/AGENTS.md)
+  - [`infra-cloud-orchestrator/AGENTS.md`](../AGENTS.md)
 
 ---
 

@@ -23,6 +23,7 @@ const forbiddenPatterns = [
   { regex: /meraki-public/, desc: 'Real GCP Project ID (meraki-public)' },
   { regex: /tuponkw/, desc: 'Internal MongoDB Atlas cluster subdomain' },
   { regex: /-----BEGIN PRIVATE KEY-----/, desc: 'Leaked private RSA/EC key' },
+  { regex: /file:\/\/\//, desc: 'Absolute file:/// link (must use relative or GitHub repo links)' },
 ];
 
 function scanDirForMd(dir) {
